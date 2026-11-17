@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hither — Screens</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #d9d0c2; color: var(--ink); font: var(--t-body); -webkit-font-smoothing: antialiased; }
+  svg.i { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* ---------- canvas ---------- */
+  .canvas { max-width: 1760px; margin: 0 auto; padding: 56px 32px 96px; }
+  .intro { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: end; margin-bottom: 56px; }
+  .intro h1 { font: 60px/1.04 var(--font-display); letter-spacing: -0.025em; font-variation-settings: "opsz" 144; }
+  .intro h1 em { color: var(--accent); }
+  .intro p { color: var(--ink-2); max-width: 52ch; margin-top: 12px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .sw { display: grid; gap: 6px; font: var(--t-small); color: var(--ink-2); }
+  .sw i { display: block; width: 64px; height: 44px; border-radius: 10px; border: 1px solid rgb(0 0 0 / .06); }
+  .typespec { margin-top: 18px; display: flex; gap: 28px; align-items: baseline; color: var(--ink-2); font: var(--t-small); }
+  .typespec b { font: 28px var(--font-display); color: var(--ink); font-weight: 400; }
+  .typespec span.ui { font: 600 16px var(--font-ui); color: var(--ink); }
+
+  .flow { margin-top: 64px; }
+  .flow > h2 { font: 28px var(--font-display); letter-spacing: -0.02em; display: flex; gap: 14px; align-items: baseline; margin-bottom: 22px; }
+  .flow > h2 small { font: var(--t-small); color: var(--ink-2); }
+  .row { display: flex; gap: 36px; flex-wrap: wrap; align-items: flex-start; }
+  figure { width: 390px; }
+  figcaption { margin-top: 14px; font: var(--t-small); color: var(--ink-2); }
+  figcaption b { display: block; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+
+  /* ---------- phone ---------- */
+  .phone { width: 390px; min-height: 844px; background: var(--paper); border-radius: 46px; overflow: hidden; position: relative;
+           box-shadow: 0 0 0 10px #1d1a16, 0 40px 80px -30px rgb(0 0 0 / .5); }
+  .status { height: 50px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; font: 600 15px var(--font-ui); position: relative; z-index: 3; }
+  .status.light { color: #fff; position: absolute; inset: 0 0 auto; }
+  .notch { position: absolute; top: 11px; left: 50%; translate: -50%; width: 120px; height: 34px; background: #000; border-radius: 20px; z-index: 4; }
+  .scr { padding: 6px 20px 32px; }
+
+  /* ---------- primitives ---------- */
+  .brand { font: italic 26px var(--font-display); letter-spacing: -0.01em; }
+  .brand::after { content: "."; color: var(--accent); font-style: normal; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 6px 0 18px; }
+  .muted { color: var(--ink-3); font: var(--t-small); }
+  .label { font: var(--t-label); color: var(--ink-2); letter-spacing: .02em; display: block; margin-bottom: 8px; }
+  .field { margin-top: 18px; }
+  .input { width: 100%; height: 50px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--card); padding: 0 14px; font: var(--t-body); color: var(--ink); display: flex; align-items: center; gap: 10px; }
+  .input.ph { color: var(--ink-3); }
+  .input.focus { border-color: var(--ink); box-shadow: 0 0 0 4px rgb(29 26 22 / .08); }
+  .input.display { font: 22px var(--font-display); letter-spacing: -0.01em; height: 58px; }
+  .two { display: grid; grid-template-columns: 1.3fr 1fr; gap: 10px; }
+  .btn { height: 54px; border-radius: var(--r-pill); border: 0; font: 600 16px var(--font-ui); display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 22px; cursor: pointer; }
+  .btn.block { width: 100%; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 20px -8px rgb(224 83 44 / .7); }
+  .btn.primary[disabled] { background: var(--line-strong); color: #fff; box-shadow: none; }
+  .btn.ink { background: var(--ink); color: var(--paper); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line-strong); }
+  .btn.sm { height: 38px; font-size: 14px; padding: 0 14px; }
+  .fine { font: var(--t-small); color: var(--ink-3); text-align: center; margin-top: 14px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: var(--r-pill); font: 500 13px var(--font-ui); }
+  .card { background: var(--card); border-radius: var(--r-lg); box-shadow: var(--shadow-card); }
+
+  /* fake photos (stand-ins for uploaded covers) */
+  .photo { background:
+      radial-gradient(60% 45% at 72% 30%, #ffd08a 0%, transparent 60%),
+      radial-gradient(40% 30% at 20% 75%, #ff7b54 0%, transparent 70%),
+      radial-gradient(80% 60% at 50% 110%, #3b1f2b 0%, transparent 70%),
+      linear-gradient(160deg, #f6a15b 0%, #d9573b 45%, #6d2a3a 100%); position: relative; }
+  .photo::before { content: ""; position: absolute; inset: 0; background:
+      radial-gradient(circle at 30% 62%, rgb(255 236 200 / .9) 0 3px, transparent 4px),
+      radial-gradient(circle at 44% 58%, rgb(255 236 200 / .8) 0 2px, transparent 3px),
+      radial-gradient(circle at 58% 64%, rgb(255 236 200 / .9) 0 3px, transparent 4px),
+      radial-gradient(circle at 70% 59%, rgb(255 236 200 / .7) 0 2px, transparent 3px),
+      radial-gradient(circle at 84% 63%, rgb(255 236 200 / .9) 0 3px, transparent 4px); }
+  .photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgb(20 10 10 / .55)); }
+
+  /* ---------- create ---------- */
+  .hero { font: var(--t-hero); letter-spacing: -0.025em; font-variation-settings: "opsz" 144; }
+  .hero em { color: var(--accent); }
+  .lede { color: var(--ink-2); margin-top: 10px; }
+  .drop { margin-top: 22px; aspect-ratio: 4/3.2; border-radius: var(--r-lg); border: 1.5px dashed var(--line-strong); background:
+          repeating-linear-gradient(135deg, transparent 0 12px, rgb(29 26 22 / .025) 12px 13px), var(--paper-2);
+          display: grid; place-items: center; text-align: center; }
+  .drop .ic { width: 56px; height: 56px; border-radius: 50%; background: var(--card); display: grid; place-items: center; margin: 0 auto 12px; box-shadow: var(--shadow-card); }
+  .drop .ic svg { width: 24px; height: 24px; }
+  .drop b { font: 22px var(--font-display); display: block; font-weight: 400; }
+  .req { display: inline-block; margin-top: 6px; font: 500 11px var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+  .cover { margin-top: 22px; aspect-ratio: 4/3.2; border-radius: var(--r-lg); overflow: hidden; }
+  .cover .replace { position: absolute; right: 12px; bottom: 12px; z-index: 2; background: rgb(255 255 255 / .92); color: var(--ink); backdrop-filter: blur(8px); }
+  .cover .ok { position: absolute; left: 12px; top: 12px; z-index: 2; background: rgb(29 26 22 / .55); color: #fff; backdrop-filter: blur(8px); }
+  .more { margin-top: 16px; display: flex; align-items: center; gap: 8px; color: var(--ink-2); font: 500 14px var(--font-ui); }
+
+  /* ---------- share ---------- */
+  .ticket { margin-top: 8px; overflow: hidden; }
+  .ticket .photo { height: 210px; }
+  .ticket .body { padding: 18px 20px 20px; }
+  .ticket h3 { font: var(--t-h2); font-weight: 400; }
+  .meta { display: flex; gap: 14px; color: var(--ink-2); font: var(--t-small); margin-top: 8px; flex-wrap: wrap; }
+  .meta span { display: inline-flex; gap: 6px; align-items: center; }
+  .meta svg.i { width: 15px; height: 15px; }
+  .linkbox { display: flex; align-items: center; gap: 10px; background: var(--paper); border-radius: var(--r-md); padding: 6px 6px 6px 14px; margin-top: 16px; border: 1px solid var(--line); }
+  .linkbox code { flex: 1; font: 500 14px var(--font-ui); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hostkey { margin-top: 18px; background: var(--warn-soft); border-radius: var(--r-lg); padding: 16px 18px; color: var(--warn); }
+  .hostkey h4 { font: 600 15px var(--font-ui); display: flex; align-items: center; gap: 8px; color: #5c430c; }
+  .hostkey p { font: var(--t-small); margin-top: 6px; }
+  .hostkey .linkbox { background: rgb(255 255 255 / .6); border-color: rgb(122 90 18 / .2); }
+  .confetti { position: absolute; inset: 96px 0 auto; height: 110px; pointer-events: none; background:
+      radial-gradient(circle at 12% 30%, var(--accent) 0 4px, transparent 5px),
+      radial-gradient(circle at 82% 22%, #f2b544 0 5px, transparent 6px),
+      radial-gradient(circle at 68% 60%, var(--yes) 0 3px, transparent 4px),
+      radial-gradient(circle at 25% 70%, #f2b544 0 3px, transparent 4px),
+      radial-gradient(circle at 92% 70%, var(--accent) 0 3px, transparent 4px); opacity: .8; }
+
+  /* ---------- invite (guest) ---------- */
+  .inv-hero { height: 470px; position: relative; }
+  .inv-hero .datechip { position: absolute; left: 20px; bottom: 74px; z-index: 2; background: rgb(255 253 249 / .95); border-radius: 16px; width: 64px; text-align: center; padding: 8px 0 7px; box-shadow: var(--shadow-card); }
+  .datechip small { display: block; font: 600 11px var(--font-ui); letter-spacing: .08em; color: var(--accent); }
+  .datechip b { display: block; font: 26px/1 var(--font-display); font-weight: 400; margin-top: 2px; }
+  .inv-hero .from { position: absolute; left: 20px; right: 20px; bottom: 36px; z-index: 2; color: #fff; font: var(--t-small); opacity: .9; }
+  .sheet { position: relative; margin-top: -26px; background: var(--paper); border-radius: 28px 28px 0 0; padding: 24px 20px 32px; z-index: 2; }
+  .sheet h1 { font: var(--t-h1); font-weight: 400; letter-spacing: -0.02em; font-variation-settings: "opsz" 120; }
+  .when { margin-top: 14px; display: grid; gap: 10px; }
+  .when div { display: flex; gap: 12px; align-items: center; color: var(--ink); font: 500 15px var(--font-ui); }
+  .when div small { display: block; font: var(--t-small); color: var(--ink-3); font-weight: 400; }
+  .when .ib { width: 38px; height: 38px; border-radius: 12px; background: var(--card); display: grid; place-items: center; border: 1px solid var(--line); }
+  .note { margin-top: 16px; color: var(--ink-2); font: var(--t-body); }
+  .rsvp { margin-top: 22px; padding: 18px; }
+  .rsvp h2 { font: var(--t-h2); font-weight: 400; }
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .choice { height: 64px; border-radius: 18px; border: 1.5px solid var(--line); background: var(--paper); display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 16px var(--font-ui); color: var(--ink); }
+  .choice .em { font-size: 20px; }
+  .choice.yes.on { background: var(--yes); border-color: var(--yes); color: #fff; }
+  .choice.no.on { background: var(--no-soft); border-color: var(--no); color: var(--no); }
+  .faces { display: flex; align-items: center; margin-top: 22px; gap: 12px; }
+  .stack { display: flex; }
+  .av { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font: 600 12px var(--font-ui); color: #fff; border: 2px solid var(--paper); margin-left: -8px; }
+  .av:first-child { margin-left: 0; }
+  .a1 { background: #b4573e; } .a2 { background: #2d6a4c; } .a3 { background: #5a6ea8; } .a4 { background: #c08a2a; } .a5 { background: #7a4e8a; } .a6 { background: #3c7f86; }
+  .faces p { font: var(--t-small); color: var(--ink-2); }
+  .faces p b { color: var(--ink); }
+  .welcome { display: inline-flex; align-items: center; gap: 8px; background: var(--yes-soft); color: var(--yes); border-radius: var(--r-pill); padding: 6px 12px 6px 6px; font: 500 13px var(--font-ui); }
+  .welcome .av { width: 24px; height: 24px; font-size: 10px; border: 0; }
+  .status-line { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+  .status-line .big { font: 22px var(--font-display); }
+  .link { color: var(--ink-2); font: 500 14px var(--font-ui); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+
+  .sec { margin-top: 28px; display: flex; justify-content: space-between; align-items: baseline; }
+  .sec h3 { font: var(--t-h2); font-weight: 400; }
+  .cmt { display: flex; gap: 10px; margin-top: 16px; }
+  .cmt .av { margin: 0; border: 0; flex: none; }
+  .bubble { background: var(--card); border-radius: 4px 18px 18px 18px; padding: 10px 14px; border: 1px solid var(--line); font: var(--t-body); }
+  .bubble .who { font: 600 13px var(--font-ui); display: flex; gap: 8px; align-items: baseline; }
+  .bubble .who small { color: var(--ink-3); font-weight: 400; }
+  .bubble .tag { font: 500 11px var(--font-ui); padding: 2px 7px; border-radius: 99px; background: var(--yes-soft); color: var(--yes); }
+  .bubble .tag.no { background: var(--no-soft); color: var(--no); }
+  .bubble .tag.host { background: var(--accent-soft); color: var(--accent-press); }
+  .compose { margin-top: 18px; display: flex; gap: 8px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 6px 6px 6px 16px; }
+  .compose .ph { flex: 1; color: var(--ink-3); }
+  .compose .send { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; }
+  .foot { margin-top: 30px; display: flex; justify-content: space-between; font: var(--t-small); color: var(--ink-3); }
+  .foot .brand { font-size: 18px; color: var(--ink-2); }
+
+  /* ---------- manage ---------- */
+  .mhead { display: flex; gap: 12px; align-items: center; padding: 4px 0 18px; }
+  .mhead .thumb { width: 52px; height: 52px; border-radius: 14px; overflow: hidden; flex: none; }
+  .mhead h2 { font: 22px/1.1 var(--font-display); font-weight: 400; }
+  .hostpill { font: 600 11px var(--font-ui); letter-spacing: .06em; text-transform: uppercase; color: var(--accent-press); background: var(--accent-soft); padding: 4px 8px; border-radius: 99px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { padding: 14px; }
+  .stat b { font: 32px/1 var(--font-display); letter-spacing: -0.02em; font-weight: 400; display: block; }
+  .stat span { font: var(--t-small); color: var(--ink-2); }
+  .stat.yes b { color: var(--yes); }
+  .tabs { margin-top: 20px; display: flex; background: var(--paper-2); border-radius: var(--r-pill); padding: 4px; }
+  .tabs span { flex: 1; text-align: center; height: 36px; display: grid; place-items: center; border-radius: var(--r-pill); font: 500 14px var(--font-ui); color: var(--ink-2); }
+  .tabs span.on { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgb(0 0 0 / .08); }
+  .list { margin-top: 14px; padding: 4px 0; }
+  .gr { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+  .gr + .gr { border-top: 1px solid var(--line); }
+  .gr .av { margin: 0; border: 0; }
+  .gr .nm { flex: 1; font: 500 15px var(--font-ui); }
+  .gr .nm small { display: block; font: var(--t-small); color: var(--ink-3); font-weight: 400; }
+  .pill { font: 600 12px var(--font-ui); padding: 4px 10px; border-radius: 99px; }
+  .pill.yes { background: var(--yes-soft); color: var(--yes); }
+  .pill.no { background: var(--no-soft); color: var(--no); }
+  .pill.blk { background: var(--ink); color: var(--paper); }
+  .kebab { color: var(--ink-3); }
+  .gr.blocked { opacity: .55; }
+  .gr.blocked .nm { text-decoration: line-through; text-decoration-color: var(--ink-3); }
+  .grp { font: var(--t-label); color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; margin: 20px 4px 0; }
+  .actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  /* bottom sheet */
+  .scrim { position: absolute; inset: 0; background: rgb(29 26 22 / .45); z-index: 5; }
+  .bsheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--card); border-radius: 28px 28px 0 0; padding: 12px 20px 34px; z-index: 6; box-shadow: var(--shadow-pop); }
+  .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 0 auto 18px; }
+  .bsheet h3 { font: 24px/1.15 var(--font-display); letter-spacing: -0.015em; font-weight: 400; }
+  .bsheet p { color: var(--ink-2); margin-top: 6px; }
+  .opt { display: flex; gap: 12px; padding: 14px; border-radius: var(--r-md); border: 1px solid var(--line); margin-top: 10px; align-items: flex-start; }
+  .opt.on { border-color: var(--ink); box-shadow: 0 0 0 3px rgb(29 26 22 / .06); }
+  .opt .rad { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-strong); flex: none; margin-top: 1px; }
+  .opt.on .rad { border: 6px solid var(--ink); }
+  .opt b { font: 600 15px var(--font-ui); display: block; }
+  .opt small { font: var(--t-small); color: var(--ink-2); }
+  .btn.danger { background: var(--ink); color: #fff; }
+
+  /* states */
+  .toast { position: absolute; left: 16px; right: 16px; top: 62px; z-index: 6; background: var(--ink); color: var(--paper); border-radius: 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: center; box-shadow: var(--shadow-pop); font: 500 14px var(--font-ui); }
+  .toast small { display: block; color: #b7ad9f; font-weight: 400; }
+  .mini { min-height: 420px; }
+  .center { min-height: 380px; display: grid; place-items: center; text-align: center; padding: 30px; }
+  .center h2 { font: var(--t-h1); font-weight: 400; }
+  .center p { color: var(--ink-2); margin: 10px auto 22px; max-width: 30ch; }
+  .glyph { font: italic 120px/1 var(--font-display); color: var(--accent); }
+  .past-ribbon { margin-top: 16px; background: var(--paper-2); border-radius: var(--r-md); padding: 12px 14px; color: var(--ink-2); font: var(--t-small); display: flex; gap: 10px; align-items: center; }
+
+  /* ---------- your invites (localStorage) ---------- */
+  .photo.b { background: radial-gradient(50% 40% at 30% 30%, #cfe3ff 0%, transparent 60%), linear-gradient(160deg, #8fb3d9 0%, #3f5f8a 60%, #1e2c45 100%); }
+  .photo.c { background: radial-gradient(50% 40% at 70% 35%, #f3f0c8 0%, transparent 60%), linear-gradient(160deg, #a8c69a 0%, #4f7a52 60%, #23392a 100%); }
+  .photo.b::before, .photo.c::before { display: none; }
+  .yi-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px; }
+  .yi-head h2 { font: var(--t-h1); font-weight: 400; letter-spacing: -0.02em; }
+  .ev { display: flex; gap: 14px; align-items: center; padding: 12px; }
+  .ev + .ev { border-top: 1px solid var(--line); }
+  .ev .thumb { width: 58px; height: 58px; border-radius: 14px; overflow: hidden; flex: none; }
+  .ev .tx { flex: 1; min-width: 0; }
+  .ev .tx b { display: block; font: 18px/1.2 var(--font-display); font-weight: 400; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ev .tx span { display: block; font: var(--t-small); color: var(--ink-2); margin-top: 2px; }
+  .ev .tx em { font-style: normal; color: var(--yes); font-weight: 500; }
+  .ev .tx .soon { display: inline-block; margin-top: 0; }
+  .ev.past { opacity: .6; }
+  .ev.past .thumb { filter: grayscale(.8); }
+  .chev { color: var(--ink-3); }
+  .soon { font: 600 11px var(--font-ui); letter-spacing: .04em; color: var(--accent-press); background: var(--accent-soft); padding: 3px 8px; border-radius: 99px; margin-left: 6px; vertical-align: 2px; }
+  .local-note { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; padding: 12px 14px; border-radius: var(--r-md); background: var(--paper-2); font: var(--t-small); color: var(--ink-2); }
+  .newcta { margin-top: 22px; border-radius: var(--r-lg); border: 1.5px dashed var(--line-strong); padding: 18px; display: flex; align-items: center; gap: 14px; }
+  .newcta .plus { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; flex: none; }
+  .newcta b { font: 20px var(--font-display); font-weight: 400; display: block; letter-spacing: -0.01em; }
+
+  /* ---------- names / gate / guest list ---------- */
+  .gate { margin-top: 20px; padding: 20px; }
+  .gate h2 { font: var(--t-h2); font-weight: 400; letter-spacing: -0.01em; }
+  .gate p.sub { color: var(--ink-2); font: var(--t-small); margin-top: 4px; }
+  .locked { margin-top: 18px; display: grid; gap: 8px; }
+  .locked div { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md); background: var(--paper-2); color: var(--ink-3); font: 500 14px var(--font-ui); }
+  .locked i { flex: 1; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--line-strong), var(--line)); opacity: .7; }
+  .names { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .nchip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 99px; background: var(--card); border: 1px solid var(--line); font: 500 13px var(--font-ui); }
+  .nchip .av { width: 22px; height: 22px; font-size: 9px; border: 0; margin: 0; }
+  .nchip.more { padding: 4px 10px; color: var(--ink-2); }
+  .cant-line { margin-top: 10px; font: var(--t-small); color: var(--ink-3); }
+  .personal { display: flex; gap: 12px; align-items: center; background: var(--yes-soft); border-radius: var(--r-lg); padding: 14px 16px; color: var(--yes); }
+  .personal b { display: block; font: 20px/1.2 var(--font-display); font-weight: 400; color: var(--ink); letter-spacing: -0.01em; }
+  .personal span { font: var(--t-small); }
+  .wait { text-align: center; padding: 26px 20px 8px; }
+  .wait .ring { width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 16px; display: grid; place-items: center; background: var(--warn-soft); color: var(--warn); }
+  .wait .ring svg { width: 30px; height: 30px; }
+  .wait h2 { font: var(--t-h1); font-weight: 400; letter-spacing: -0.02em; }
+  .wait p { color: var(--ink-2); margin: 10px auto 0; max-width: 30ch; }
+  .tag-nol { font: 600 11px var(--font-ui); padding: 3px 8px; border-radius: 99px; background: var(--warn-soft); color: var(--warn); margin-left: 6px; vertical-align: 1px; }
+  .iconbtn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink-2); background: var(--card); flex: none; }
+  .iconbtn svg.i { width: 16px; height: 16px; }
+  .addbox { margin-top: 18px; background: var(--card); border: 1px solid var(--ink); box-shadow: 0 0 0 4px rgb(29 26 22 / .08); border-radius: var(--r-md); padding: 12px 14px; min-height: 76px; font: var(--t-body); }
+  .addbox .ph { color: var(--ink-3); }
+  .caret { display: inline-block; width: 1.5px; height: 18px; background: var(--ink); vertical-align: -3px; margin-left: 1px; }
+  .seg-opt { display: flex; gap: 12px; padding: 12px 14px; align-items: flex-start; }
+  .seg-opt + .seg-opt { border-top: 1px solid var(--line); }
+  .seg-opt .rad { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--line-strong); flex: none; margin-top: 1px; }
+  .seg-opt.on .rad { border: 6px solid var(--ink); }
+  .seg-opt b { display: block; font: 600 14px var(--font-ui); }
+  .seg-opt small { font: var(--t-small); color: var(--ink-2); }
+  .toggle { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 14px; font: 500 14px var(--font-ui); }
+  .sw-t { width: 44px; height: 26px; border-radius: 99px; background: var(--yes); position: relative; flex: none; }
+  .sw-t::after { content: ""; position: absolute; right: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; }
+  .gr .mini-btns { display: flex; gap: 6px; }
+  .btn.xs { height: 32px; font-size: 13px; padding: 0 12px; }
+  .addguests { margin-top: 14px; display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .addguests b { display: block; font: 600 15px var(--font-ui); }
+
+  /* notes */
+  .notes { margin-top: 72px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .notes > div { background: var(--paper); border-radius: 20px; padding: 22px; }
+  .notes h4 { font: 22px var(--font-display); font-weight: 400; margin-bottom: 8px; }
+  .notes p, .notes li { color: var(--ink-2); font: var(--t-small); }
+  .notes ul { padding-left: 18px; display: grid; gap: 4px; }
+
+  @media (max-width: 900px) {
+    .intro { grid-template-columns: 1fr; }
+    .intro h1 { font-size: 52px; }
+    .canvas { padding: 32px 16px 64px; }
+    figure, .phone { width: 100%; max-width: 390px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- icon sprite -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="img" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m4 17 4.5-4.5 4 4 2.5-2.5 5 5"/></symbol>
+  <symbol id="link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></symbol>
+  <symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+  <symbol id="key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l2 2M14 9l2 2"/></symbol>
+  <symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="send" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="slow" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v4.5M12 16h.01"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="device" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M11 18h2"/></symbol>
+  <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><path d="M16 5.2a3.5 3.5 0 0 1 0 6.6M18 14.8c1.8.7 3 2.5 3.5 5.2"/></symbol>
+  <symbol id="hourglass" viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/></symbol>
+  <symbol id="edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></symbol>
+</svg>
+
+<div class="canvas">
+
+  <section class="intro">
+    <div>
+      <div class="brand" style="font-size:22px;margin-bottom:18px">hither</div>
+      <h1>Send an invite.<br><em>Get a yes.</em></h1>
+      <p>Warm-paper invitation aesthetic: the host's photo does the heavy lifting, a serif title makes it feel like a card you'd put on the fridge, and one tomato accent drives every primary action. Mobile-first — almost every guest arrives from a text message.</p>
+    </div>
+    <div>
+      <div class="swatches">
+        <div class="sw"><i style="background:var(--paper)"></i>Paper</div>
+        <div class="sw"><i style="background:var(--card)"></i>Card</div>
+        <div class="sw"><i style="background:var(--ink)"></i>Ink</div>
+        <div class="sw"><i style="background:var(--accent)"></i>Tomato</div>
+        <div class="sw"><i style="background:var(--yes)"></i>Going</div>
+        <div class="sw"><i style="background:var(--no-soft)"></i>Can't</div>
+        <div class="sw"><i style="background:var(--warn-soft)"></i>Caution</div>
+      </div>
+      <div class="typespec">
+        <div><b>Fraunces</b><br>titles, numbers, headings</div>
+        <div><span class="ui">Geist</span><br>UI, body, buttons</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= HOST: CREATE ================= -->
+  <section class="flow">
+    <h2>1 · Create <small>Host, no sign-up. Three required things: photo, title, date. Returning hosts see their saved invites first.</small></h2>
+    <div class="row">
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="topbar"><span class="brand">hither</span><span class="muted">3 saved here</span></div>
+            <div class="yi-head"><h2>Your invites</h2><span class="link">Edit</span></div>
+
+            <div class="grp">Upcoming</div>
+            <div class="card list" style="padding:2px 4px">
+              <div class="ev"><div class="thumb photo"></div><div class="tx"><b>Rooftop Supper Club</b><span>Sat, Dec 6 · 7:30 PM<span class="soon">IN 19 DAYS</span></span><span><em>12 going</em> · 3 can't · 8 comments</span></div><svg class="i chev"><use href="#chev"/></svg></div>
+              <div class="ev"><div class="thumb photo b"></div><div class="tx"><b>Lena's Baby Shower</b><span>Sun, Jan 11 · 2:00 PM</span><span><em>4 going</em> · 1 can't</span></div><svg class="i chev"><use href="#chev"/></svg></div>
+            </div>
+
+            <div class="grp">Past</div>
+            <div class="card list" style="padding:2px 4px">
+              <div class="ev past"><div class="thumb photo c"></div><div class="tx"><b>Friendsgiving 2026</b><span>Thu, Nov 13 · 18 went</span></div><svg class="i chev"><use href="#chev"/></svg></div>
+            </div>
+
+            <div class="newcta"><span class="plus"><svg class="i"><use href="#plus"/></svg></span><span><b>Make a new invite</b><span class="muted">Photo, title, date — about a minute.</span></span></div>
+
+            <div class="local-note"><svg class="i"><use href="#device"/></svg><span>Saved in this browser only. Opening a host link on another device adds it there too. Keep your host links somewhere safe.</span></div>
+          </div>
+        </div>
+        <figcaption><b>Your invites (returning host)</b>Read from localStorage, counts fetched in one call. Shown above the create form whenever the list isn't empty. Edit lets you remove an invite from this device — the event itself is untouched.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="topbar"><span class="brand">hither</span><span class="muted">No sign-up needed</span></div>
+            <h1 class="hero">Make an <em>invite.</em></h1>
+            <p class="lede">Photo, title, date. Send the link. That's it.</p>
+
+            <div class="drop">
+              <div>
+                <div class="ic"><svg class="i"><use href="#img"/></svg></div>
+                <b>Add a cover photo</b>
+                <span class="muted">Tap to choose · JPG, PNG or WebP</span><br>
+                <span class="req">Required</span>
+              </div>
+            </div>
+
+            <div class="field"><span class="label">What's happening?</span><div class="input display ph">Taco night at Ana's</div></div>
+            <div class="field two">
+              <div><span class="label">Date</span><div class="input ph"><svg class="i"><use href="#cal"/></svg>Pick a day</div></div>
+              <div><span class="label">Time</span><div class="input ph"><svg class="i"><use href="#clock"/></svg>7:00 PM</div></div>
+            </div>
+            <div class="more"><svg class="i"><use href="#plus"/></svg>Add location or a note</div>
+
+            <div style="margin-top:22px"><button class="btn primary block" disabled>Create invite</button></div>
+            <p class="fine">Invites disappear 30 days after the event.</p>
+          </div>
+        </div>
+        <figcaption><b>Empty</b>Button stays disabled until photo + title + date exist. Upload area is the biggest thing on screen — it's required, so it leads.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="topbar"><span class="brand">hither</span><span class="muted">No sign-up needed</span></div>
+            <h1 class="hero">Make an <em>invite.</em></h1>
+            <p class="lede">Photo, title, date. Send the link. That's it.</p>
+
+            <div class="cover photo" style="position:relative">
+              <span class="chip ok"><svg class="i" style="width:14px;height:14px"><use href="#check"/></svg>Optimized · 184 KB</span>
+              <span class="chip replace">Replace</span>
+            </div>
+
+            <div class="field"><span class="label">What's happening?</span><div class="input display focus">Rooftop Supper Club</div></div>
+            <div class="field"><span class="label">Your name <span style="color:var(--ink-3);font-weight:400">· shown as "Ana invited you"</span></span><div class="input">Ana</div></div>
+            <div class="field two">
+              <div><span class="label">Date</span><div class="input"><svg class="i"><use href="#cal"/></svg>Sat, Dec 6</div></div>
+              <div><span class="label">Time</span><div class="input"><svg class="i"><use href="#clock"/></svg>7:30 PM</div></div>
+            </div>
+            <div class="field"><span class="label">Where <span style="color:var(--ink-3);font-weight:400">· optional</span></span><div class="input"><svg class="i"><use href="#pin"/></svg>Ana's place, 4th floor</div></div>
+
+            <div style="margin-top:22px"><button class="btn primary block">Create invite</button></div>
+            <p class="fine">Protected by Cloudflare · Invites disappear 30 days after the event.</p>
+          </div>
+        </div>
+        <figcaption><b>Ready</b>Host's name is required so guests know who invited them. Image is resized to WebP in the browser before upload (fast on cell, cheap to store). Turnstile runs invisibly on submit.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="confetti"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="topbar"><span class="brand">hither</span><span class="muted">Your invite</span></div>
+            <h1 class="hero" style="font-size:40px">It's live. <em>Send it.</em></h1>
+
+            <div class="card ticket" style="margin-top:18px">
+              <div class="photo"></div>
+              <div class="body">
+                <h3>Rooftop Supper Club</h3>
+                <div class="meta"><span><svg class="i"><use href="#cal"/></svg>Sat, Dec 6 · 7:30 PM</span><span><svg class="i"><use href="#pin"/></svg>Ana's place</span></div>
+                <div class="linkbox"><code>hither.app/e/k7m2q9xd4r</code><button class="btn ink sm"><svg class="i"><use href="#copy"/></svg>Copy</button></div>
+                <button class="btn primary block" style="margin-top:12px"><svg class="i"><use href="#share"/></svg>Share invite</button>
+              </div>
+            </div>
+
+            <div class="card addguests"><span class="iconbtn" style="background:var(--accent-soft);color:var(--accent-press);border:0"><svg class="i"><use href="#users"/></svg></span><span style="flex:1"><b>Add who's invited</b><span class="muted">Optional · everyone gets their own link</span></span><svg class="i chev"><use href="#chev"/></svg></div>
+
+            <div class="hostkey">
+              <h4><svg class="i"><use href="#key"/></svg>Save your host link</h4>
+              <p>It's the only way to see responses or block someone. We've also saved it under <b>Your invites</b> in this browser, but there's no account to recover it.</p>
+              <div class="linkbox"><code>hither.app/e/k7m2q9xd4r/manage#k=••••••</code><button class="btn ghost sm" style="border-color:rgb(122 90 18 / .3);color:#5c430c">Copy</button></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Share</b>The guest list is optional and one tap away. Links are clearly ranked: the public one is a big tomato button (native share sheet); the host key is a caution card you can't miss.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="topbar"><span class="link" style="text-decoration:none">← Back</span><span class="btn ink xs">Done</span></div>
+            <h1 class="hero" style="font-size:34px">Who's <em>invited?</em></h1>
+            <p class="lede">Each person gets their own link, so you'll know exactly who replied and who didn't.</p>
+
+            <div class="addbox"><span>Jordan Lee, Mel, Priya</span><br><span>Sam K.<span class="caret"></span></span></div>
+            <p class="muted" style="margin-top:6px">Paste or type names, one per line or separated by commas.</p>
+
+            <div class="sec" style="margin-top:20px"><h3 style="font-size:19px">5 personal links</h3><span class="link">Copy all</span></div>
+            <div class="card list" style="margin-top:10px">
+              <div class="gr"><span class="av a2">JL</span><span class="nm">Jordan Lee</span><span class="iconbtn"><svg class="i"><use href="#copy"/></svg></span><span class="iconbtn"><svg class="i"><use href="#share"/></svg></span></div>
+              <div class="gr"><span class="av a4">ML</span><span class="nm">Mel</span><span class="iconbtn"><svg class="i"><use href="#copy"/></svg></span><span class="iconbtn"><svg class="i"><use href="#share"/></svg></span></div>
+              <div class="gr"><span class="av a5">PR</span><span class="nm">Priya</span><span class="iconbtn"><svg class="i"><use href="#copy"/></svg></span><span class="iconbtn"><svg class="i"><use href="#share"/></svg></span></div>
+            </div>
+
+            <span class="label" style="margin-top:22px">Who can RSVP?</span>
+            <div class="card" style="padding:2px 0">
+              <div class="seg-opt"><span class="rad"></span><span><b>Anyone with the link</b><small>People type their name first. You'll see who's not on your list.</small></span></div>
+              <div class="seg-opt on"><span class="rad"></span><span><b>Only my list</b><small>Everyone else asks to join and waits for your OK.</small></span></div>
+            </div>
+            <div class="card toggle"><span>Guests can see who's going</span><span class="sw-t"></span></div>
+          </div>
+        </div>
+        <figcaption><b>Guest list (optional)</b>Names only, no emails: you send each link through your own texts or group chat. "Copy all" gives you "Jordan: link" lines ready to paste. The access setting decides what happens to people who aren't on the list.</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ================= GUEST ================= -->
+  <section class="flow">
+    <h2>2 · The invite <small>Every guest has a name before they can do anything. Personal links skip the question; the shared link asks first.</small></h2>
+    <div class="row">
+
+      <figure>
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="status light"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="inv-hero photo">
+            <div class="datechip"><small>DEC</small><b>6</b></div>
+            <div class="from">Ana invited you</div>
+          </div>
+          <div class="sheet">
+            <h1>Rooftop Supper Club</h1>
+            <div class="meta" style="font-size:14px"><span><svg class="i"><use href="#cal"/></svg>Saturday, Dec 6 · 7:30 PM</span></div>
+
+            <div class="card gate">
+              <h2>First, who are you?</h2>
+              <p class="sub">Ana will see your name next to your answer.</p>
+              <div class="field" style="margin-top:14px"><div class="input focus">Sam<span class="caret"></span></div></div>
+              <button class="btn primary block" style="margin-top:12px">Continue</button>
+            </div>
+
+            <div class="locked">
+              <div><svg class="i"><use href="#pin"/></svg>Location<i></i><svg class="i"><use href="#lock"/></svg></div>
+              <div><svg class="i"><use href="#users"/></svg>Who's coming<i></i><svg class="i"><use href="#lock"/></svg></div>
+              <div><svg class="i"><use href="#send"/></svg>8 comments<i></i><svg class="i"><use href="#lock"/></svg></div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Shared link: name first</b>Before giving a name you only see the photo, title, date and host, which is the same as the link preview. The address, guest list, comments and RSVP unlock after. Turnstile runs on Continue, so bots never become guests.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="status light"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="inv-hero photo" style="height:340px">
+            <div class="datechip" style="bottom:52px"><small>DEC</small><b>6</b></div>
+          </div>
+          <div class="sheet">
+            <div class="personal"><span class="av a2" style="width:40px;height:40px;border:0;margin:0">JL</span><span><b>Hi Jordan</b>Ana saved you a spot.</span></div>
+            <h1 style="margin-top:16px">Rooftop Supper Club</h1>
+            <div class="when">
+              <div><span class="ib"><svg class="i"><use href="#clock"/></svg></span><span>Saturday, December 6 · 7:30 PM<small>Mountain Time · Add to calendar</small></span></div>
+              <div><span class="ib"><svg class="i"><use href="#pin"/></svg></span><span>Ana's place, 4th floor<small>Open in Maps</small></span></div>
+            </div>
+            <div class="card rsvp">
+              <h2>Can you make it?</h2>
+              <div class="choices">
+                <div class="choice yes">I'm in</div>
+                <div class="choice no">Can't make it</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption><b>Personal link</b>No name prompt; the link already knows who this is. One tap to answer. The <code>?g=</code> token is removed from the address bar after it's used, so a screenshot doesn't leak it.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="status light"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="inv-hero photo" style="height:300px">
+            <div class="datechip" style="bottom:52px"><small>DEC</small><b>6</b></div>
+          </div>
+          <div class="sheet">
+            <span class="welcome"><span class="av a3">SK</span>Welcome back, Sam</span>
+            <h1 style="margin-top:12px">Rooftop Supper Club</h1>
+            <div class="meta" style="font-size:14px"><span><svg class="i"><use href="#cal"/></svg>Sat, Dec 6 · 7:30 PM</span><span><svg class="i"><use href="#pin"/></svg>Ana's place</span></div>
+
+            <div class="card rsvp">
+              <div class="status-line"><span class="big">You're going</span><span class="link">Change</span></div>
+              <div class="choices" style="margin-top:12px">
+                <div class="choice yes on"><svg class="i"><use href="#check"/></svg>I'm in</div>
+                <div class="choice no">Can't make it</div>
+              </div>
+            </div>
+
+            <div class="sec"><h3>Who's coming</h3><span class="muted">12 going</span></div>
+            <div class="names">
+              <span class="nchip"><span class="av a1">AN</span>Ana · host</span>
+              <span class="nchip"><span class="av a3">SK</span>You</span>
+              <span class="nchip"><span class="av a2">JL</span>Jordan</span>
+              <span class="nchip"><span class="av a4">ML</span>Mel</span>
+              <span class="nchip"><span class="av a6">TR</span>Theo</span>
+              <span class="nchip"><span class="av a5">RN</span>Rina</span>
+              <span class="nchip more">+6 more</span>
+            </div>
+            <p class="cant-line">3 can't make it</p>
+
+            <div class="sec"><h3>Comments</h3><span class="muted">8</span></div>
+            <div class="cmt"><span class="av a1">AN</span><div class="bubble"><div class="who">Ana <span class="tag host">Host</span><small>2d</small></div>Parking is easiest on 14th. Buzz #4!</div></div>
+            <div class="cmt"><span class="av a2">JT</span><div class="bubble"><div class="who">Jordan <span class="tag">Going</span><small>1d</small></div>I'll bring the good tortillas</div></div>
+            <div class="cmt"><span class="av a5">PR</span><div class="bubble"><div class="who">Priya <span class="tag no">Can't</span><small>5h</small></div>So sad to miss this — next one for sure.</div></div>
+
+            <div class="compose"><span class="ph">Say something…</span><span class="send"><svg class="i"><use href="#send"/></svg></span></div>
+
+            <div class="foot"><span class="brand">hither</span><span>Make your own · Report</span></div>
+          </div>
+        </div>
+        <figcaption><b>Unlocked / returning guest</b>Recognized by device cookie, rendered on the server so there's no flash. Everyone going is listed by name. "Can't" is a count only, and nobody but the host sees who hasn't replied.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="status light"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="inv-hero photo" style="height:300px">
+            <div class="datechip" style="bottom:52px"><small>DEC</small><b>6</b></div>
+            <div class="from" style="bottom:36px">Ana invited you</div>
+          </div>
+          <div class="sheet">
+            <h1>Rooftop Supper Club</h1>
+            <div class="meta" style="font-size:14px"><span><svg class="i"><use href="#cal"/></svg>Saturday, Dec 6 · 7:30 PM</span></div>
+            <div class="card wait" style="margin-top:20px;padding-bottom:22px">
+              <div class="ring"><svg class="i"><use href="#hourglass"/></svg></div>
+              <h2>Thanks, Sam</h2>
+              <p>This invite is guest-list only. Ana will see your request, and this page will open up once you're in.</p>
+            </div>
+            <p class="fine">Same browser, same link: no need to ask twice.</p>
+          </div>
+        </div>
+        <figcaption><b>Not on the list (list-only mode)</b>Answers "what if they weren't invited?". They get a polite waiting screen with no address, no guest list and no comments. If the host declines, the screen simply stays like this.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone">
+          <div class="notch"></div>
+          <div class="status light"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="inv-hero photo" style="height:300px">
+            <div class="datechip" style="bottom:52px"><small>DEC</small><b>6</b></div>
+          </div>
+          <div class="sheet">
+            <h1>Rooftop Supper Club</h1>
+            <div class="card rsvp">
+              <h2>Are you coming?</h2>
+              <div class="choices">
+                <div class="choice yes on"><svg class="i"><use href="#check"/></svg>I'm in</div>
+                <div class="choice no">Can't make it</div>
+              </div>
+            </div>
+            <div class="sec"><h3>Comments</h3><span class="muted">8</span></div>
+            <div class="cmt"><span class="av a2">JT</span><div class="bubble"><div class="who">Jordan <span class="tag">Going</span><small>1d</small></div>I'll bring the good tortillas</div></div>
+          </div>
+          <div class="toast"><svg class="i" style="color:#f2b544"><use href="#slow"/></svg><span>Easy there — one sec<small>Too many updates at once. Try again in a moment.</small></span></div>
+        </div>
+        <figcaption><b>Rate-limited</b>Friendly toast, never an error page. Same message whether it's a burst limit or the daily comment cap. Blocked guests never see this — they get the normal success state (shadow block).</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ================= HOST: MANAGE ================= -->
+  <section class="flow">
+    <h2>3 · Host dashboard <small>Opened from the host link. Key lives in the URL #fragment + this device.</small></h2>
+    <div class="row">
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="mhead">
+              <div class="thumb photo"></div>
+              <div style="flex:1"><span class="hostpill">You're the host</span><h2 style="margin-top:6px">Rooftop Supper Club</h2></div>
+              <svg class="i" style="color:var(--ink-2)"><use href="#edit"/></svg>
+            </div>
+            <div class="stats">
+              <div class="card stat yes"><b>12</b><span>Going</span></div>
+              <div class="card stat"><b>3</b><span>Can't</span></div>
+              <div class="card stat"><b>5</b><span>No reply</span></div>
+            </div>
+            <div class="actions">
+              <button class="btn ink sm" style="flex:1"><svg class="i"><use href="#share"/></svg>Share invite</button>
+              <button class="btn ghost sm" style="flex:1"><svg class="i"><use href="#eye"/></svg>View as guest</button>
+            </div>
+            <div class="tabs"><span class="on">Guests · 21</span><span>Comments · 8</span></div>
+
+            <div class="grp">Asking to join · 1</div>
+            <div class="card list">
+              <div class="gr"><span class="av a6">DV</span><span class="nm">Dev<small>Not on your list · 10m ago</small></span><span class="mini-btns"><span class="btn ink xs">Let in</span><span class="btn ghost xs">No</span></span></div>
+            </div>
+            <div class="grp">Going · 12</div>
+            <div class="card list">
+              <div class="gr"><span class="av a3">SK</span><span class="nm">Sam K.<small>Personal link · 2h ago</small></span><span class="pill yes">Going</span><svg class="i kebab"><use href="#more"/></svg></div>
+              <div class="gr"><span class="av a2">JL</span><span class="nm">Jordan Lee<small>Personal link · 1d ago</small></span><span class="pill yes">Going</span><svg class="i kebab"><use href="#more"/></svg></div>
+              <div class="gr"><span class="av a6">TR</span><span class="nm">Theo<span class="tag-nol">Not on list</span><small>Shared link · 1d ago</small></span><span class="pill yes">Going</span><svg class="i kebab"><use href="#more"/></svg></div>
+            </div>
+            <div class="grp">No reply yet · 5</div>
+            <div class="card list">
+              <div class="gr"><span class="av a4">ML</span><span class="nm">Mel<small>Opened the invite · not answered</small></span><span class="iconbtn"><svg class="i"><use href="#copy"/></svg></span></div>
+              <div class="gr"><span class="av a5">RN</span><span class="nm">Rina<small>Hasn't opened it</small></span><span class="iconbtn"><svg class="i"><use href="#copy"/></svg></span></div>
+            </div>
+            <div class="grp">Can't · 3 &nbsp;·&nbsp; Blocked · 1</div>
+          </div>
+        </div>
+        <figcaption><b>Guests</b>The host sees everything guests can't: join requests (one-tap Let in), who hasn't replied and whether they've even opened it, and a "Not on list" tag on anyone who typed their own name. Copy someone's link again to nudge them.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="scr">
+            <div class="mhead">
+              <div class="thumb photo"></div>
+              <div style="flex:1"><span class="hostpill">You're the host</span><h2 style="margin-top:6px">Rooftop Supper Club</h2></div>
+            </div>
+            <div class="stats">
+              <div class="card stat yes"><b>12</b><span>Going</span></div>
+              <div class="card stat"><b>3</b><span>Can't</span></div>
+              <div class="card stat"><b>5</b><span>No reply</span></div>
+            </div>
+            <div class="tabs"><span>Guests · 21</span><span class="on">Comments · 8</span></div>
+            <div class="cmt"><span class="av a2">JT</span><div class="bubble"><div class="who">Jordan<small>1d</small></div>I'll bring the good tortillas</div></div>
+            <div class="cmt"><span class="av a6">XX</span><div class="bubble"><div class="who">definitely not spam<small>3m</small></div>CHEAP FOLLOWERS click my profile!!!</div></div>
+          </div>
+          <div class="scrim"></div>
+          <div class="bsheet">
+            <div class="grab"></div>
+            <h3>Block “definitely not spam”?</h3>
+            <p>They won't be told. Their page keeps working for them — nobody else sees their answers or comments.</p>
+            <div class="opt on"><span class="rad"></span><span><b>Block this person</b><small>Their device and network. Recommended.</small></span></div>
+            <div class="opt"><span class="rad"></span><span><b>Just hide this comment</b><small>They can keep commenting.</small></span></div>
+            <button class="btn danger block" style="margin-top:16px">Block</button>
+            <button class="btn block" style="background:none;color:var(--ink-2);height:44px;margin-top:4px">Cancel</button>
+          </div>
+        </div>
+        <figcaption><b>Block sheet</b>Two plain choices; jargon like "IP" stays out of the UI ("device and network"). Shadow-blocking means trolls don't know to come back on a new phone.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="phone mini" style="min-height:400px"><div class="notch"></div>
+          <div class="status"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="center"><div>
+            <div class="glyph">?</div>
+            <h2>This invite isn't here</h2>
+            <p>The link may be mistyped, or the host removed it. Invites also disappear 30 days after the event.</p>
+            <button class="btn primary">Make your own invite</button>
+          </div></div>
+        </div>
+        <div class="phone" style="min-height:0;margin-top:36px">
+          <div class="notch"></div>
+          <div class="status light"><span>9:41</span><span>●●● ▮</span></div>
+          <div class="inv-hero photo" style="height:200px;filter:grayscale(.7)"></div>
+          <div class="sheet">
+            <h1 style="font-size:28px">Rooftop Supper Club</h1>
+            <div class="past-ribbon"><svg class="i"><use href="#clock"/></svg>This happened on Dec 6. 12 people went. Comments are still open.</div>
+          </div>
+        </div>
+        <figcaption><b>Edge states</b>Not-found is a gentle dead end that recruits a new host. Past events desaturate the photo and close RSVPs, but keep the thread for "thanks for coming!".</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <section class="notes">
+    <div><h4>Why this look</h4><p>Invites compete with screenshots in a group chat. A big photo + serif title reads as "a real invitation" in under a second, and the paper tone makes any user photo look warmer and more intentional.</p></div>
+    <div><h4>Interaction rules</h4><ul><li>Every tap target ≥ 48px; RSVP buttons 64px.</li><li>Answers save instantly (optimistic), with a quiet "Saved" state.</li><li>Comments are plain text — no links, so no spam payoff.</li></ul></div>
+    <div><h4>Free to run</h4><ul><li>One Cloudflare Worker + one D1 database. That's the whole backend.</li><li>$0, no credit card, no domain needed (<code>*.workers.dev</code>).</li><li>Photos live in D1 as small WebP files, so there's no storage bucket to set up.</li><li>Invites delete themselves 30 days after the event, so storage stays small.</li></ul></div>
+    <div><h4>Fast in any browser</h4><ul><li>Just a link. No app, no install, works on any phone.</li><li>Pages arrive fully rendered: ~30 KB of HTML/CSS/JS before the photo.</li><li>Photos are shrunk in the browser before upload; the list uses 20 KB thumbnails.</li><li>Self-hosted font subsets and inline SVG icons. No third-party requests to wait on.</li></ul></div>
+    <div><h4>Next for design</h4><ul><li>Dark mode token set.</li><li>Per-invite theme (font + accent pairs).</li><li>OG card variant with date chip baked in.</li></ul></div>
+  </section>
+
+</div>
+</body>
+</html>

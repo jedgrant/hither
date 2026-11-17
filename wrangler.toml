@@ -1,0 +1,26 @@
+name = "hither"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# CSS, JS and fonts. Served free and unlimited, before the Worker runs.
+[assets]
+directory = "./public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hither"
+# Created with `npx wrangler d1 create hither`:
+database_id = "68a70bcb-f130-4ae3-948b-f4f7a55628cb"
+migrations_dir = "migrations"
+
+# Daily cleanup: events 30 days past, old rate-limit counters.
+[triggers]
+crons = ["17 4 * * *"]
+
+[vars]
+# Turnstile bot check (free). Site key is public; the secret is stored with
+# `npx wrangler secret put TURNSTILE_SECRET`. Widget: `npx wrangler turnstile widget list`.
+# Set this to "" to turn Turnstile off (rate limits still apply).
+# Local dev uses Cloudflare's test keys from .dev.vars instead.
+TURNSTILE_SITEKEY = "0x4AAAAAAGF47qsshLeOaMYd"

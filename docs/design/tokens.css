@@ -1,0 +1,53 @@
+/* Hither design tokens — shared by mockups and the real app.
+   Mockups pull fonts from Google for convenience; production self-hosts
+   Latin-subset WOFF2 files (see PLAN.md §2 performance budget). */
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Geist:wght@400;500;600&display=swap");
+
+:root {
+  /* surfaces */
+  --paper: #f4eee5;
+  --paper-2: #ebe3d6;
+  --card: #fffdf9;
+  --line: #e3d9ca;
+  --line-strong: #cfc3b1;
+
+  /* ink */
+  --ink: #1d1a16;
+  --ink-2: #5a534a;
+  --ink-3: #8e867a;
+
+  /* brand */
+  --accent: #e0532c;        /* tomato */
+  --accent-press: #c4441f;
+  --accent-soft: #fbe5dc;
+  --on-accent: #fff;
+
+  /* states */
+  --yes: #2d6a4c;
+  --yes-soft: #e1eee6;
+  --no: #8c4a3a;
+  --no-soft: #f3e3dd;
+  --warn: #7a5a12;
+  --warn-soft: #fbf0d3;
+
+  /* type */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-ui: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --t-hero: 38px/1.08 var(--font-display);
+  --t-h1: 30px/1.12 var(--font-display);
+  --t-h2: 21px/1.2 var(--font-display);
+  --t-body: 400 15px/1.5 var(--font-ui);
+  --t-small: 400 13px/1.45 var(--font-ui);
+  --t-label: 500 12px/1 var(--font-ui);
+
+  /* shape */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+  --shadow-card: 0 1px 0 rgb(29 26 22 / .04), 0 18px 40px -18px rgb(29 26 22 / .28);
+  --shadow-pop: 0 24px 60px -20px rgb(29 26 22 / .45);
+
+  /* space (4pt) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 20px; --s6: 24px; --s8: 32px;
+}
