@@ -104,7 +104,7 @@ Every guest is a **named person** before they can do anything. That's what lets 
 - Entering a name (or opening a personal link) is a **POST** to `/api/e/:slug/join`. It creates the guest row and sets the `gid` cookie (128-bit random, `HttpOnly; Secure; SameSite=Lax; Max-Age=400d`, stored hashed). Turnstile runs on this call, so bots can't create guests.
 - **GETs never create guests.** Link-preview bots (iMessage, Slack, Facebook) only ever see the gated page.
 - Personal link + new device: the token re-binds that device to the same guest. Personal links survive cleared cookies, which fixes duplicates for listed guests.
-- A self-named guest whose name **exactly matches** an unclaimed list name is *not* auto-merged (that would allow impersonation). Instead the host sees "Sam (asked via shared link). Is this *Sam K.* from your list?" with a one-tap **Merge**.
+- **Changed in build:** when the host has added names, the shared link asks for a **first name**. A match adopts that listed guest on that device, and keeps doing so on every device that enters the same first name. Hosts don't have to send personal links. Duplicate first names need a last initial when added; the guest is then asked for theirs. Nicknames that don't match can still be merged by hand. Trade-off accepted by the owner: anyone who knows a listed first name can act as that guest. The host sees the device count and can use **Make a new link** to sign all devices out.
 - Lost cookie on the shared link = enter the name again → new row; the host can merge or delete.
 
 **What guests can see about each other** (after the name gate):

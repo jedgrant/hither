@@ -184,3 +184,17 @@ export function sniffImage(b: Uint8Array): "image/jpeg" | "image/webp" | null {
   if (b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === "RIFF" && String.fromCharCode(...b.slice(8, 12)) === "WEBP") return "image/webp";
   return null;
 }
+
+// ---------- guest-list name matching ----------
+/** "Jordán  Lee" → { first: "jordan", initial: "l" }. Case, accents and punctuation are ignored. */
+export function nameParts(name: string): { first: string; initial: string } {
+  const words = name.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase()
+    .replace(/[^\p{L}\p{N}\s'-]/gu, " ").split(/\s+/).filter(Boolean);
+  return { first: words[0] ?? "", initial: words.length > 1 ? words[words.length - 1][0] : "" };
+}
+
+/** Two list names that a guest couldn't tell apart by first name + last initial. */
+export function namesClash(a: string, b: string): boolean {
+  const x = nameParts(a), y = nameParts(b);
+  return x.first === y.first && (!x.initial || !y.initial || x.initial === y.initial);
+}

@@ -13,7 +13,7 @@ export type EventRow = {
 export type GuestRow = {
   id: string; event_id: string; name: string; source: "list" | "link";
   invite_token: string | null; access: "in" | "pending" | "declined";
-  rsvp: "yes" | "no" | null; shadow: number; opened_at: string | null;
+  rsvp: "yes" | "no" | null; shadow: number; opened_at: string | null; joined_via: "token" | "name" | null;
   created_at: string; updated_at: string;
 };
 

@@ -14,6 +14,7 @@ const hostUrl = () => `${origin}/e/${slug}/manage#k=${encodeURIComponent(key)}`;
 
 let data = null;
 let tab = "guests";
+let refocusAdd = false; // keep the cursor in "Add a name" after each add
 
 async function load() {
   try {
@@ -79,12 +80,17 @@ function render() {
     h("div.actions",
       h("button.btn.ink.sm", { type: "button", onclick: () => share(shareUrl, ev.title, `${ev.host_name} invited you`) }, icon("share"), "Share invite"),
       h("button.btn.ghost.sm", { type: "button", onclick: () => copy(shareUrl, "Invite link copied") }, icon("copy"), "Copy link")),
+    h("button.hostaccess", { type: "button", onclick: hostAccessSheet },
+      h("span.iconbtn", icon("key")),
+      h("span", h("b", "Host access link"), h("small", "Open this dashboard on your phone or another computer")),
+      icon("chev", "i chev")),
     h("div.tabs", { role: "tablist" },
       tabBtn("guests", `Guests · ${G.all.length}`),
       tabBtn("comments", `Comments · ${data.comments.length}`),
       tabBtn("settings", "Settings")),
     h("div#tab", tab === "guests" ? guestsTab(G) : tab === "comments" ? commentsTab() : settingsTab(ev)),
   ].filter(Boolean));
+  if (refocusAdd) { refocusAdd = false; $("#add-name")?.focus({ preventScroll: true }); }
 }
 
 const tabBtn = (id, label) =>
@@ -100,26 +106,74 @@ function liveCard(ev) {
       h("h4", icon("key"), "Save your host link"),
       h("p", "It's the only way back to this page to see replies or block someone. It's saved under Your invites in this browser too, but there's no account to recover it."),
       h("div.linkbox", h("code", `${shareUrl.replace(/^https?:\/\//, "")}/manage#k=••••••`),
-        h("button.btn.ghost.xs", { type: "button", onclick: () => copy(hostUrl(), "Host link copied. Keep it somewhere safe.") }, "Copy"))),
+        h("button.btn.ghost.xs", { type: "button", onclick: () => copy(hostUrl(), "Host link copied. Keep it somewhere safe.") }, "Copy")),
+      h("button.btn.ghost.sm.block", { type: "button", style: "margin-top:10px;border-color:rgb(122 90 18 / .3);color:#5c430c", onclick: shareHostLink }, icon("share"), "Send it to my other device")),
     h("div.row", { style: "display:flex;justify-content:flex-end;margin-top:10px" },
       h("button.link", { type: "button", onclick: () => { isNew = false; render(); } }, "Hide this")),
   );
 }
 
+// ---------- host access link ----------
+function shareHostLink() {
+  share(hostUrl(), `Host link: ${data.event.title}`, "Opens the hither dashboard for this invite. Keep it private.");
+}
+
+function hostAccessSheet() {
+  sheet((p, close) => {
+    p.append(
+      h("h3", "Host access link"),
+      h("p", "Open this link on your phone, tablet or another computer to see replies and edit the invite there. It's added to Your invites on that device too."),
+      h("div.hostkey.sheet-warn",
+        h("h4", icon("lock"), "Anyone with this link can manage the invite"),
+        h("p", "Only send it to yourself or someone helping you host. It's not the invite link for guests.")),
+      h("div.linkbox", h("code", `${shareUrl.replace(/^https?:\/\//, "")}/manage#k=••••••`),
+        h("button.btn.ghost.xs", { type: "button", onclick: () => copy(hostUrl(), "Host link copied") }, icon("copy", "i sm"), "Copy")),
+      h("button.btn.ink.block", { type: "button", onclick: () => { close(); shareHostLink(); } }, icon("share"), "Send to another device"),
+      h("div.reset-row",
+        h("span", h("b", "Sent it to the wrong person?"), h("small", "Make a new host link. Every old copy, on every device, stops working.")),
+        h("button.btn.ghost.xs", { type: "button", onclick: async () => { close(); await resetHostLink(); } }, "Reset")),
+    );
+  });
+}
+
+async function resetHostLink() {
+  const ok = await confirmSheet({
+    title: "Reset the host link?",
+    text: "All old host links stop working right away, including ones saved on your other devices. This device gets the new link. Guests aren't affected.",
+    ok: "Reset host link", danger: true,
+  });
+  if (!ok) return;
+  try {
+    const r = await api(`/api/e/${slug}/host-key`, { method: "POST", key });
+    key = r.hostKey;
+    hosted.save({ slug, key });
+    toast("New host link made. Send it again to any other devices.");
+    hostAccessSheet();
+  } catch (e) { toast(e.message); }
+}
+
 // ---------- guests ----------
 function guestsTab(G) {
-  const ta = h("textarea.input.area#names", { rows: 3, placeholder: "Jordan Lee\nMel, Priya", "aria-label": "Names to invite" });
+  const input = h("input.input#add-name", {
+    maxlength: 40, placeholder: "Add a name", autocomplete: "off", autocapitalize: "words", enterkeyhint: "done", "aria-label": "Name to invite",
+  });
   const err = h("p.form-error", { hidden: true, role: "alert" });
-  const addBtn = h("button.btn.ink.sm", {
-    type: "button",
-    onclick: async () => {
-      const names = ta.value.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
-      if (!names.length) return showError(err, "Type at least one name.");
+  const addBtn = h("button.btn.ink", { type: "submit" }, icon("plus"), "Add");
+  const addForm = h("form.addrow", {
+    onsubmit: async (e) => {
+      e.preventDefault();
+      const name = input.value.trim();
+      if (!name) return input.focus();
+      showError(err, "");
       addBtn.classList.add("busy");
-      try { await post("/guests", { names }); toast(`Added ${names.length}. Send each person their link.`); await load(); }
-      catch (e) { showError(err, e.message); addBtn.classList.remove("busy"); }
+      try {
+        await post("/guests", { names: [name] });
+        toast(`${first(name)} added. Copy their link below.`);
+        refocusAdd = true;
+        await load();
+      } catch (e2) { showError(err, e2.message); addBtn.classList.remove("busy"); input.focus(); }
     },
-  }, "Add");
+  }, input, addBtn);
 
   const listGuests = G.all.filter((g) => g.source === "list" && !g.blocked);
   const ev = data.event;
@@ -127,11 +181,10 @@ function guestsTab(G) {
   return [
     h("section.card.addcard",
       h("h3", "Who's invited?"),
-      h("p", "Optional. Type or paste names, one per line or separated by commas. Everyone gets their own link, so you'll know who hasn't replied."),
-      ta, err,
-      h("div.row",
-        listGuests.length ? h("button.btn.ghost.sm", { type: "button", onclick: () => copy(listGuests.map((g) => `${g.name}: ${personalUrl(g)}`).join("\n"), "All personal links copied") }, icon("copy", "i sm"), "Copy all links") : null,
-        addBtn),
+      h("p", "Optional. Add people one at a time. Guests on the shared link type their first name and get matched to your list, or you can send each person their own link."),
+      addForm, err,
+      listGuests.length ? h("div.row",
+        h("button.btn.ghost.sm", { type: "button", onclick: () => copy(listGuests.map((g) => `${g.name}: ${personalUrl(g)}`).join("\n"), "All personal links copied") }, icon("copy", "i sm"), `Copy all ${listGuests.length} links`)) : null,
       h("p", { style: "margin-top:12px" },
         ev.access === "list" ? "Only your list can RSVP; others ask to join. " : "Anyone with the link can RSVP after typing their name. ",
         h("button.link", { type: "button", onclick: () => { tab = "settings"; render(); } }, "Change"))),
@@ -156,7 +209,10 @@ function guestRow(g, G) {
   let sub;
   if (g.blocked) sub = "Hidden from everyone. They don't know.";
   else if (g.access === "pending") sub = `Not on your list · ${ago(g.created_at)}`;
-  else if (g.source === "list") sub = g.rsvp ? `Personal link · ${ago(g.updated_at)}` : g.opened_at ? "Opened the invite · not answered" : "Hasn't opened it yet";
+  else if (g.source === "list") {
+    const via = g.joined_via === "name" ? "Matched by name" : "Personal link";
+    sub = g.rsvp ? `${via} · ${ago(g.updated_at)}` : g.opened_at ? `${via} · opened, not answered` : "Hasn't opened it yet";
+  }
   else sub = `Shared link · ${ago(g.updated_at)}`;
   if (g.source === "list" && g.devices > 1) sub += ` · opened on ${g.devices} devices`;
 
@@ -312,9 +368,11 @@ function settingsTab(ev) {
       h("div.field.two", h("div", h("label.label", { for: "s-date" }, "Date"), date), h("div", h("label.label", { for: "s-time" }, `Time (${ev.tz.replace(/_/g, " ")})`), time)),
       f("s-loc", "Where", loc), f("s-note", "Note", note), err, save),
 
-    h("div.grp", "Your host link"),
-    h("div.linkbox", h("code", `${shareUrl.replace(/^https?:\/\//, "")}/manage#k=••••••`),
-      h("button.btn.ghost.xs", { type: "button", onclick: () => copy(hostUrl(), "Host link copied") }, "Copy")),
+    h("div.grp", "Host access"),
+    h("button.hostaccess", { type: "button", onclick: hostAccessSheet },
+      h("span.iconbtn", icon("key")),
+      h("span", h("b", "Host access link"), h("small", "Share, copy or reset the link that opens this dashboard")),
+      icon("chev", "i chev")),
 
     h("div.danger-zone",
       h("button.btn.ghost.block", {

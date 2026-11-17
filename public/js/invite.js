@@ -35,7 +35,17 @@ if (joinForm) {
     btn.classList.add("busy");
     try {
       const turnstile = joinForm.querySelector("[name='cf-turnstile-response']")?.value;
-      await api(`/api/e/${slug}/join`, { method: "POST", body: { name: name.value, turnstile } });
+      const initialStep = $("#initial-step");
+      const initial = initialStep && !initialStep.hidden ? $("#initial").value.trim() : undefined;
+      const r = await api(`/api/e/${slug}/join`, { method: "POST", body: { name: name.value, initial, turnstile } });
+      if (r.need === "initial") {
+        // Two people on the list share this first name: ask which one (same Turnstile token is reused).
+        $("#initial-label").textContent = `There are ${r.count} people named ${name.value.trim().split(/\s+/)[0]} on the list. What's your last initial?`;
+        initialStep.hidden = false;
+        $("#initial").focus();
+        btn.classList.remove("busy");
+        return;
+      }
       store.set("hither:name", name.value.trim());
       location.reload();
     } catch (e2) {

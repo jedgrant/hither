@@ -66,6 +66,7 @@ export function homePage(sitekey?: string) {
           <b>Add a cover photo</b>
           <span class="muted">Tap to choose a photo</span>
           <span class="req">Required</span>
+          <span class="drop-tip">For best results, use a photo without the date, time or address on it. We show those for you.</span>
         </span>
         <span class="drop-full" hidden>
           <img id="photo-preview" alt="">
@@ -108,6 +109,7 @@ export type InviteCtx = {
   going: { id: string; name: string }[];
   counts: { yes: number; no: number };
   comments: CommentView[];
+  hasList?: boolean;       // host added names: ask for first name and match
   sitekey?: string;
 };
 
@@ -143,9 +145,16 @@ export function invitePage(c: InviteCtx) {
     <div class="meta"><span>${icon("cal")}${shortWhen(ev)}</span></div>
     <form class="card gate" id="join-form">
       <h2>First, who are you?</h2>
-      <p class="sub">${firstName(ev.host_name)} will see your name next to your answer.</p>
-      <label class="sr-only" for="name">Your name</label>
-      <input class="input" id="name" name="name" maxlength="40" placeholder="Your name" autocomplete="name" required>
+      <p class="sub">${c.hasList
+        ? `Type your first name. If ${firstName(ev.host_name)} added you, you'll be matched up.`
+        : `${firstName(ev.host_name)} will see your name next to your answer.`}</p>
+      <label class="sr-only" for="name">${c.hasList ? "Your first name" : "Your name"}</label>
+      <input class="input" id="name" name="name" maxlength="40" placeholder="${c.hasList ? "Your first name" : "Your name"}"
+        autocomplete="${c.hasList ? "given-name" : "name"}" autocapitalize="words" required>
+      <div class="initial-step" id="initial-step" hidden>
+        <label class="label" for="initial" id="initial-label">What's your last initial?</label>
+        <input class="input initial" id="initial" name="initial" maxlength="1" autocomplete="off" autocapitalize="characters">
+      </div>
       ${turnstileBox(c.sitekey)}
       <p class="form-error" id="join-error" role="alert" hidden></p>
       <button class="btn primary block" type="submit">Continue</button>

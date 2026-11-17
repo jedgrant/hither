@@ -5,7 +5,7 @@ import {
   type EventRow, type GuestRow,
 } from "./lib/data";
 import {
-  allow, clean, cleanLine, fmtDate, netIds, newId, nowIso, randomKey, randomToken, sha256, sniffImage, validTz,
+  allow, clean, cleanLine, fmtDate, nameParts, namesClash, netIds, newId, nowIso, randomKey, randomToken, sha256, sniffImage, validTz,
   verifyTurnstile, zonedToUtc, type Env,
 } from "./lib/util";
 import { homePage, invitePage, layout, managePage, messagePage } from "./views/pages";
@@ -114,6 +114,9 @@ app.get("/e/:slug", async (c) => {
   }
 
   const state = !me ? "gate" : me.access === "in" ? "in" : "waiting";
+  const hasList = state === "gate"
+    ? !!(await db.prepare("SELECT 1 FROM guests WHERE event_id = ? AND source = 'list' LIMIT 1").bind(ev.id).first())
+    : false;
   const meId = state === "in" ? me!.id : null;
   const [going, counts, comments] = await Promise.all([
     state === "in" ? goingGuests(db, ev.id, meId) : Promise.resolve([]),
@@ -124,7 +127,7 @@ app.get("/e/:slug", async (c) => {
   c.header("Cache-Control", "private, no-store");
   c.header("X-Robots-Tag", "noindex");
   const when = `${fmtDate(ev.starts_at, ev.tz, { weekday: "short", month: "short", day: "numeric" })} · ${fmtDate(ev.starts_at, ev.tz, { hour: "numeric", minute: "2-digit" })}`;
-  return page(c, invitePage({ ev, me, state, pendingToken, going, counts, comments, sitekey: c.env.TURNSTILE_SITEKEY || undefined }), {
+  return page(c, invitePage({ ev, me, state, pendingToken, going, counts, comments, hasList, sitekey: c.env.TURNSTILE_SITEKEY || undefined }), {
     title: ev.title,
     description: `${ev.host_name} invited you · ${when}`,
     image: `/img/${ev.image_id}`,
@@ -239,7 +242,7 @@ app.post("/api/e/:slug/join", async (c) => {
   const ev = await liveEvent(c);
   const { net } = await netIds(db, c.req.raw);
   await limit(c, `join:${net}`, 30, 3600);
-  const b = await body<{ name?: string; token?: string; turnstile?: string }>(c);
+  const b = await body<{ name?: string; initial?: string; token?: string; turnstile?: string }>(c);
 
   let gid = getCookie(c, COOKIE);
   if (!gid || !/^[a-z2-9]{26}$/.test(gid)) gid = randomToken(26);
@@ -255,7 +258,7 @@ app.post("/api/e/:slug/join", async (c) => {
     if (!g) fail(404, "This personal link has been replaced. Ask the host for a new one.");
     await db.batch([
       bindDevice(db, ev.id, gidHash, g!.id, net),
-      db.prepare("UPDATE guests SET opened_at = COALESCE(opened_at, ?) WHERE id = ?").bind(now, g!.id),
+      db.prepare("UPDATE guests SET opened_at = COALESCE(opened_at, ?), joined_via = COALESCE(joined_via, 'token') WHERE id = ?").bind(now, g!.id),
     ]);
     return c.json({ state: g!.access });
   }
@@ -265,11 +268,33 @@ app.post("/api/e/:slug/join", async (c) => {
 
   const name = cleanLine(b.name, 40);
   if (!name) fail(400, "Add your name to continue.");
+
+  // Guest list match: a first name on the host's list adopts that guest, on any device.
+  // Two listed people with the same first name are told apart by last initial.
+  const typed = nameParts(name);
+  const blocked = await isBlocked(db, ev.id, gidHash, net); // blocked devices never adopt a listed guest
+  const { results: listed } = await db.prepare("SELECT * FROM guests WHERE event_id = ? AND source = 'list'").bind(ev.id).all<GuestRow>();
+  let matches = typed.first && !blocked ? listed.filter((g) => nameParts(g.name).first === typed.first) : [];
+  if (matches.length > 1) {
+    const initial = (cleanLine(b.initial, 1) || typed.initial).toLowerCase();
+    // Asked before Turnstile is checked, so the same token is still valid for the follow-up.
+    if (!initial) return c.json({ need: "initial", count: matches.length });
+    matches = matches.filter((g) => nameParts(g.name).initial === initial);
+  }
+
   if (!(await verifyTurnstile(c.env, b.turnstile, c.req.raw))) fail(400, "Couldn't verify you're human. Refresh and try again.");
+
+  if (matches.length === 1) {
+    const g = matches[0];
+    await db.batch([
+      bindDevice(db, ev.id, gidHash, g.id, net),
+      db.prepare("UPDATE guests SET opened_at = COALESCE(opened_at, ?), joined_via = COALESCE(joined_via, 'name') WHERE id = ?").bind(now, g.id),
+    ]);
+    return c.json({ state: g.access });
+  }
   const count = await db.prepare("SELECT COUNT(*) AS n FROM guests WHERE event_id = ?").bind(ev.id).first<{ n: number }>();
   if ((count?.n ?? 0) >= MAX_GUESTS) fail(403, "This invite has reached its guest limit.");
 
-  const blocked = await isBlocked(db, ev.id, gidHash, net);
   const access = ev.access === "list" ? "pending" : "in";
   const id = newId();
   await db.batch([
@@ -353,7 +378,7 @@ app.get("/api/e/:slug/host", async (c) => {
   const db = c.env.DB;
   const ev = await host(c);
   const [guests, comments] = await Promise.all([
-    db.prepare(`SELECT g.id, g.name, g.source, g.invite_token, g.access, g.rsvp, g.shadow, g.opened_at, g.created_at, g.updated_at,
+    db.prepare(`SELECT g.id, g.name, g.source, g.invite_token, g.access, g.rsvp, g.shadow, g.opened_at, g.joined_via, g.created_at, g.updated_at,
                 (SELECT COUNT(*) FROM guest_devices d WHERE d.guest_id = g.id) AS devices
                 FROM guests g WHERE g.event_id = ? ORDER BY g.updated_at DESC`).bind(ev.id).all(),
     db.prepare(`SELECT c.id, c.guest_id, c.body, c.hidden, c.shadow, c.created_at, g.name, g.rsvp
@@ -394,12 +419,31 @@ app.delete("/api/e/:slug", async (c) => {
   return c.json({ ok: true });
 });
 
+// Replace the host key. Every existing host link (and other devices' saved copies) stops working.
+app.post("/api/e/:slug/host-key", async (c) => {
+  const ev = await host(c);
+  const hostKey = randomKey();
+  await c.env.DB.prepare("UPDATE events SET host_key_hash = ? WHERE id = ?").bind(await sha256(hostKey), ev.id).run();
+  return c.json({ hostKey });
+});
+
 app.post("/api/e/:slug/guests", async (c) => {
   const db = c.env.DB;
   const ev = await host(c);
   const { names } = await body<{ names?: unknown }>(c);
   const list = (Array.isArray(names) ? names : []).map((n) => cleanLine(n, 40)).filter(Boolean);
   if (!list.length) fail(400, "Add at least one name.");
+  const { results: existing } = await db.prepare("SELECT name FROM guests WHERE event_id = ? AND source = 'list'").bind(ev.id).all<{ name: string }>();
+  const seen = existing.map((g) => g.name);
+  for (const name of list) {
+    const clash = seen.find((other) => namesClash(other, name));
+    if (clash) {
+      const word = name.split(/\s+/)[0];
+      const first = word.charAt(0).toUpperCase() + word.slice(1);
+      fail(400, `You already have ${clash}. Add a last initial, like "${first} K", so guests can tell themselves apart.`);
+    }
+    seen.push(name);
+  }
   const count = await db.prepare("SELECT COUNT(*) AS n FROM guests WHERE event_id = ?").bind(ev.id).first<{ n: number }>();
   if ((count?.n ?? 0) + list.length > MAX_GUESTS) fail(400, `An invite can have up to ${MAX_GUESTS} guests.`);
   const now = nowIso();
